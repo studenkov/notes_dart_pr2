@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'notes_cubit.dart';
+import 'package:notes_dart_pr2/presentation/cubit/notes_state.dart';
+import '../cubit/notes_cubit.dart';
 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});

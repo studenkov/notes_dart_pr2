@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'presentation/notes_cubit.dart';
-import 'presentation/notes_screen.dart';
+import 'presentation/cubit/notes_cubit.dart';
+import 'presentation/screens/notes_screen.dart';
 
 void main() {
   runApp(const NotesApp());
