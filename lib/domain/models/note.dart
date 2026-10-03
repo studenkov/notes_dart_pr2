@@ -1,19 +1,10 @@
 class Note {
   final String id;
-  final String content;
-  final DateTime createdAt;
+  final String text;
 
-  const Note({
-    required this.id,
-    required this.content,
-    required this.createdAt,
-  });
+  const Note({required this.id, required this.text});
 
-  Note copyWith({String? id, String? content, DateTime? createdAt}) {
-    return Note(
-      id: id ?? this.id,
-      content: content ?? this.content,
-      createdAt: createdAt ?? this.createdAt,
-    );
+  Note copyWith({String? id, String? text, DateTime? createdAt}) {
+    return Note(id: id ?? this.id, text: text ?? this.text);
   }
 }

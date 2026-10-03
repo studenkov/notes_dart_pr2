@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../data/note.dart';
+import '../domain/models/note.dart';
 
 class NotesState {
   final List<Note> notes;
