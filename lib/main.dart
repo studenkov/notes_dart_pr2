@@ -31,13 +31,13 @@ class NotesApp extends StatelessWidget {
               brightness: Brightness.dark,
             );
 
-        return MaterialApp(
-          themeMode: ThemeMode.system,
-          theme: ThemeData(colorScheme: lightScheme, useMaterial3: true),
-          darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
-          home: ChangeNotifierProvider(
-            create: (_) => NotesProvider(),
-            child: const NotesScreen(),
+        return ChangeNotifierProvider(
+          create: (_) => NotesProvider(),
+          child: MaterialApp(
+            themeMode: ThemeMode.system,
+            theme: ThemeData(colorScheme: lightScheme, useMaterial3: true),
+            darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
+            home: const NotesScreen(),
           ),
         );
       },
