@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:notes_dart_pr2/presentation/cubit/notes_state.dart';
-import '../cubit/notes_cubit.dart';
+import 'package:provider/provider.dart';
+import '../provider/notes_provider.dart';
 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
@@ -15,17 +14,46 @@ class _NotesScreenState extends State<NotesScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   String? _currentEditingId;
+  NotesProvider? _notesProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.read<NotesProvider>();
+    if (_notesProvider != provider) {
+      _notesProvider?.removeListener(_onNotesChanged);
+      _notesProvider = provider;
+      _notesProvider?.addListener(_onNotesChanged);
+    }
+  }
 
   @override
   void dispose() {
+    _notesProvider?.removeListener(_onNotesChanged);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
+  void _onNotesChanged() {
+    if (!mounted) return;
+    final editingNote = _notesProvider?.editingNote;
+    if (editingNote != null && editingNote.id != _currentEditingId) {
+      _currentEditingId = editingNote.id;
+      _controller.text = editingNote.text;
+      _controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: _controller.text.length),
+      );
+      _focusNode.requestFocus();
+    } else if (editingNote == null && _currentEditingId != null) {
+      _currentEditingId = null;
+      _controller.clear();
+    }
+  }
+
   void _onSave(BuildContext context) {
-    final cubit = context.read<NotesCubit>();
-    final success = cubit.saveNote(_controller.text);
+    final provider = context.read<NotesProvider>();
+    final success = provider.saveNote(_controller.text);
 
     if (success) {
       _controller.clear();
@@ -34,13 +62,13 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   void _onCancel(BuildContext context) {
-    context.read<NotesCubit>().cancelEditing();
+    context.read<NotesProvider>().cancelEditing();
     _controller.clear();
     _focusNode.unfocus();
   }
 
   void _onDelete(BuildContext context, String id) {
-    context.read<NotesCubit>().deleteNote(id);
+    context.read<NotesProvider>().deleteNote(id);
   }
 
   @override
@@ -54,22 +82,8 @@ class _NotesScreenState extends State<NotesScreen> {
         bottom: false,
         left: true,
         right: true,
-        child: BlocConsumer<NotesCubit, NotesState>(
-          listener: (context, state) {
-            if (state.editingNote != null &&
-                state.editingNote!.id != _currentEditingId) {
-              _currentEditingId = state.editingNote!.id;
-              _controller.text = state.editingNote!.text;
-              _controller.selection = TextSelection.fromPosition(
-                TextPosition(offset: _controller.text.length),
-              );
-              _focusNode.requestFocus();
-            } else if (state.editingNote == null && _currentEditingId != null) {
-              _currentEditingId = null;
-              _controller.clear();
-            }
-          },
-          builder: (context, state) {
+        child: Consumer<NotesProvider>(
+          builder: (context, provider, child) {
             return Column(
               children: [
                 Container(
@@ -83,14 +97,14 @@ class _NotesScreenState extends State<NotesScreen> {
                         focusNode: _focusNode,
                         maxLines: 3,
                         minLines: 1,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Введите текст заметки',
                         ),
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          if (state.isEditing) ...[
+                          if (provider.isEditing) ...[
                             OutlinedButton(
                               onPressed: () => _onCancel(context),
                               child: const Text('Отмена'),
@@ -101,7 +115,7 @@ class _NotesScreenState extends State<NotesScreen> {
                             child: FilledButton.icon(
                               onPressed: () => _onSave(context),
                               label: Text(
-                                state.isEditing
+                                provider.isEditing
                                     ? 'Сохранить изменения'
                                     : 'Сохранить',
                               ),
@@ -114,7 +128,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 ),
                 const Divider(height: 1),
                 Expanded(
-                  child: state.notes.isEmpty
+                  child: provider.notes.isEmpty
                       ? Center(
                           child: Text(
                             'Заметок пока нет',
@@ -130,11 +144,11 @@ class _NotesScreenState extends State<NotesScreen> {
                             top: 16,
                             bottom: 16 + MediaQuery.paddingOf(context).bottom,
                           ),
-                          itemCount: state.notes.length,
+                          itemCount: provider.notes.length,
                           itemBuilder: (context, index) {
-                            final note = state.notes[index];
+                            final note = provider.notes[index];
                             final isEditingNote =
-                                state.editingNote?.id == note.id;
+                                provider.editingNote?.id == note.id;
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 8),
@@ -154,16 +168,19 @@ class _NotesScreenState extends State<NotesScreen> {
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        note.text,
-                                        style: theme.textTheme.bodyLarge,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          note.text,
+                                          style: theme.textTheme.bodyLarge,
+                                        ),
                                       ),
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.edit_outlined),
                                       tooltip: 'Редактировать',
                                       onPressed: () => context
-                                          .read<NotesCubit>()
+                                          .read<NotesProvider>()
                                           .startEditing(note),
                                     ),
                                     IconButton(
@@ -195,6 +212,9 @@ class _NotesScreenState extends State<NotesScreen> {
 Widget notesScreenPreview() {
   return MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: BlocProvider(create: (_) => NotesCubit(), child: const NotesScreen()),
+    home: ChangeNotifierProvider(
+      create: (_) => NotesProvider(),
+      child: const NotesScreen(),
+    ),
   );
 }

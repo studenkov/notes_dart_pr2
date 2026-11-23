@@ -1,7 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'presentation/cubit/notes_cubit.dart';
+import 'package:provider/provider.dart';
+import 'presentation/provider/notes_provider.dart';
 import 'presentation/screens/notes_screen.dart';
 
 void main() {
@@ -35,8 +35,8 @@ class NotesApp extends StatelessWidget {
           themeMode: ThemeMode.system,
           theme: ThemeData(colorScheme: lightScheme, useMaterial3: true),
           darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
-          home: BlocProvider(
-            create: (_) => NotesCubit(),
+          home: ChangeNotifierProvider(
+            create: (_) => NotesProvider(),
             child: const NotesScreen(),
           ),
         );
